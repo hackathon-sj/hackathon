@@ -1,0 +1,7 @@
+matplotlib
+altair
+snowflake
+streamlit
+pandas
+pathlib
+st_pages
