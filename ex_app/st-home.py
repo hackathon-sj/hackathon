@@ -61,13 +61,13 @@ st.title('Sales Forecast Visualization Application')
 
 show_pages(
     [
-        Page("example_app/st-home.py", "Home", "🏠"),
+        Page("ex_app/st-home.py", "Home", "🏠"),
             # Can use :<icon-name>: or the actual icon
-        Page("example_app/st-partone.py", "Part One", "👖"),
+        Page("ex_app/st-one.py", "Part One", "👖"),
             # The pages appear in the order you pass them
-        Page("example_app/st-parttwo.py", "Part Two", ":shoe:"),
-        Page("example_app/st-partthree.py", "Part Three", "💰"),
-        Page("example_app/st-partfour.py", "Part Four", "💵"),
+        Page("ex_app/st-two.py", "Part Two", ":shoe:"),
+        Page("ex_app/st-three.py", "Part Three", "💰"),
+        Page("ex_app/st-four.py", "Part Four", "💵"),
         #Page("example_app/st-partone.py", "Part One", ":jeans:"),
             #Page("example_app/example_two.py", "Example Two", "✏️"),
             # Will use the default icon and name based on the filename if you don't
