@@ -4,7 +4,8 @@ import altair as alt
 import pandas as pd
 from snowflake.snowpark import Session
 from st_pages import add_page_title
-
+from datetime import datetime  # For date and time
+import pytz   
 #add_page_title(layout="wide")
 
 # Establish Snowflake session
@@ -12,8 +13,33 @@ st.cache_data.clear()
 st.cache_resource.clear()
 
 
-st.header('💵:shoe:👖 **Part Three-Forecasting Demand**')
-st.subheader('**Total Sales for Multiple Products**')
+# display time start
+# Get the timezone object
+tz_NY = pytz.timezone('America/New_York') 
+tz_IN = pytz.timezone('Asia/Kolkata') 
+tz_LA = pytz.timezone('America/Los_Angeles') 
+
+datetime_NY = datetime.now(tz_NY)
+datetime_LA = datetime.now(tz_LA)
+datetime_IN = datetime.now(tz_IN)
+
+india_time = datetime_IN.strftime("%H:%M")
+us_time = datetime_NY.strftime("%H:%M")
+pst_time = datetime_LA.strftime("%H:%M")
+
+c1, c2,c3 = st.columns([0.32,0.28,0.45])
+with c1:
+    st.write(f"> **⛄New York Time = {us_time}**")
+with c2:
+    st.write(f"> **☀️India Time = {india_time}**")
+with c3:
+    st.write(f"> **🌤️Los Angeles Time = {pst_time}**")
+
+# display time end
+
+
+st.header('💵:shoe:👖 **Part Four-Forecasting Demand**')
+st.subheader('**Total Sales for Multiple Products including Holidays**')
 st.markdown("""- Men\'s Apparel
 - Men\'s Athletic Footwear 
 - Men\'s Street Footwear""")
@@ -33,13 +59,13 @@ st.divider()
 def make_heatmap3 ():
     
  # Assuming 'df' is a pandas DataFrame with 'TIMESTAMP', 'TOTAL_SALES_$', and 'FORECAST' columns
-    df = session.sql("SELECT timestamp, total_sales_$, NULL AS forecast FROM ADIDAS.PUBLIC.Mens_Apparel_total_sales UNION SELECT TS AS timestamp, NULL AS total_sales_$, forecast FROM ADIDAS.PUBLIC.total_sales_predictions ORDER BY timestamp asc").to_pandas()
+    df = session.sql("SELECT timestamp as timestamp, total_sales, product, NULL AS forecast FROM ADIDAS.PUBLIC.ALLPRODUCTS_total_SALES where to_date(timestamp ) > (SELECT max(to_date(timestamp)) - interval ' 2 months' FROM ADIDAS.PUBLIC.ALLPRODUCTS_total_SALES) UNION SELECT TS AS timestamp, NULL AS total_sales, series AS product, forecast FROM ADIDAS.PUBLIC.us_total_sales_predictions ORDER BY timestamp, product asc").to_pandas()
 
     # Creating line charts for Units Sold and Forecast
     line_total_sales = alt.Chart(df).mark_line(color='blue', size=2).encode(
         x='TIMESTAMP:T',
-        y='TOTAL_SALES_$:Q',
-        tooltip=['TIMESTAMP', 'TOTAL_SALES_$']
+        y='TOTAL_SALES:Q',
+        tooltip=['TIMESTAMP', 'TOTAL_SALES']
     ).properties(
         title='Total Sales'
     )
@@ -71,12 +97,13 @@ def make_heatmap3 ():
 #- Finally we will generate visualizations in the form of line chart.
 #""")
 
-st.write('✏️ **Step 1:- Create Forecasting model for **:green[total sales]** for product- **:orange[Men\'s Apparel]****')
+st.write('✏️ **Step 1:- Create Forecasting model for **:green[total sales]** for multiple products- **:orange[Men\'s Apparel,Men\'s Athletic Footwear & Men\'s Street Footwear]****')
+
 if 'button_clicked7' not in st.session_state:
     st.session_state.button_clicked7 = False
 if st.button("**:blue[Create Forecasting Model!]**"):
     st.session_state.button_clicked7=True
-    session.sql("CREATE OR REPLACE forecast ADIDAS.PUBLIC.sales_forecast (INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'ADIDAS.PUBLIC.Mens_Apparel_total_sales'),TIMESTAMP_COLNAME => 'TIMESTAMP',TARGET_COLNAME => 'TOTAL_SALES_$');").collect()
+    session.sql("CREATE OR REPLACE forecast ADIDAS.PUBLIC.allproducts_sales_forecast (INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'ADIDAS.PUBLIC.ALLPRODUCTS_total_SALES'),SERIES_COLNAME => 'PRODUCT',TIMESTAMP_COLNAME => 'TIMESTAMP',TARGET_COLNAME => 'TOTAL_SALES');").collect()
 
 if st.session_state.button_clicked7:
     st.success("Forecasting Model created successfully !")
@@ -92,8 +119,9 @@ if 'button_clicked8' not in st.session_state:
     st.session_state.button_clicked8 = False
 if st.button("**:blue[Create Predictions!]**"):
     st.session_state.button_clicked8=True
-    session.sql("CALL ADIDAS.PUBLIC.total_sales_forecast!FORECAST(FORECASTING_PERIODS =>"+Days+");").collect()
-    session.sql("CREATE OR REPLACE TABLE ADIDAS.PUBLIC.total_sales_predictions AS (SELECT * FROM TABLE(RESULT_SCAN(-1)));").collect()
+    session.sql("CREATE OR REPLACE VIEW ADIDAS.PUBLIC.us_forecast_data_sales AS (WITH future_dates AS (SELECT (select max(timestamp) from NY_SALES_DATA) ::DATE + row_number() OVER (ORDER BY 0) AS timestamp FROM TABLE(generator(rowcount => "+Days+"))),product_items AS (select distinct product  from ALLPRODUCTS_total_SALES),joined_product_items AS (SELECT * FROM product_items CROSS JOIN future_dates ORDER BY product ASC, timestamp ASC)SELECT jmi.product,to_timestamp_ntz(jmi.timestamp) AS timestamp,ch.holiday_name FROM joined_product_items AS jmi LEFT JOIN us_holidays ch ON jmi.timestamp = ch.date ORDER BY jmi.product ASC,jmi.timestamp ASC);").collect()
+    session.sql("CALL ADIDAS.PUBLIC.allproducts_sales_forecast!forecast(INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'ADIDAS.PUBLIC.us_forecast_data_sales'),SERIES_COLNAME => 'product',TIMESTAMP_COLNAME => 'timestamp');").collect()
+    session.sql("CREATE OR REPLACE TABLE ADIDAS.PUBLIC.us_total_sales_predictions AS (SELECT * FROM TABLE(RESULT_SCAN(-1)));").collect()
 if st.session_state.button_clicked8:
     st.success("Predictions created successfully !")
 

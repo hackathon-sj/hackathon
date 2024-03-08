@@ -4,6 +4,8 @@ import altair as alt
 import pandas as pd
 from snowflake.snowpark import Session
 from st_pages import add_page_title
+from datetime import datetime  # For date and time
+import pytz   
 
 #add_page_title(layout="wide")
 
@@ -11,8 +13,35 @@ from st_pages import add_page_title
 st.cache_data.clear()
 st.cache_resource.clear()
 
+
+# display time start
+# Get the timezone object
+tz_NY = pytz.timezone('America/New_York') 
+tz_IN = pytz.timezone('Asia/Kolkata') 
+tz_LA = pytz.timezone('America/Los_Angeles') 
+
+datetime_NY = datetime.now(tz_NY)
+datetime_LA = datetime.now(tz_LA)
+datetime_IN = datetime.now(tz_IN)
+
+india_time = datetime_IN.strftime("%H:%M")
+us_time = datetime_NY.strftime("%H:%M")
+pst_time = datetime_LA.strftime("%H:%M")
+
+c1, c2,c3 = st.columns([0.32,0.28,0.45])
+with c1:
+    st.write(f"> **⛄New York Time = {us_time}**")
+with c2:
+    st.write(f"> **☀️India Time = {india_time}**")
+with c3:
+    st.write(f"> **🌤️Los Angeles Time = {pst_time}**")
+
+# display time end
+
+
+
 st.header(':shoe:👖 **Part Two-Forecasting Demand**')
-st.subheader('**Units Sold for Multiple Products**')
+st.subheader('**Units Sold for Multiple Products including Holidays**')
 st.markdown("""- Men\'s Apparel
 - Men\'s Athletic Footwear 
 - Men\'s Street Footwear""")
