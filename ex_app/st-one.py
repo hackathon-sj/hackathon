@@ -119,29 +119,27 @@ if st.session_state.button_clicked2:
     st.success("Predictions created successfully !")
 
 st.write('✏️ **Step 3:- Create Visualization**')
-if 'button_clicked3' not in st.session_state:
-    st.session_state.button_clicked3 = False
-if st.button("**:blue[View Line Chart!]**"):
-    st.session_state.button_clicked3=True
+#if 'button_clicked3' not in st.session_state:
+#    st.session_state.button_clicked3 = False
+#if st.button("**:blue[View Line Chart!]**"):
+#    st.session_state.button_clicked3=True
 
    # st.write(":heavy_minus_sign:" * 29) 
 
 
-#col = st.columns((1.5, 4.5, 2), gap='medium')
-#col1,col2 = st.columns([2.5,2])
 
-#with col1:
-# with st.expander("Expand this area to visualize line chart for **first** part"):
-#with st.container():
-#st.markdown('#### Visualization 1')
 st.write(":heavy_minus_sign:" * 29)     
  
+#heatmap_chart = make_heatmap()
+#if st.session_state.button_clicked3:
+#    st.altair_chart(heatmap_chart, use_container_width=True)
+#    st.success("Visualization created")
+
+
 heatmap_chart = make_heatmap()
-if st.session_state.button_clicked3:
+if  st.button("**:blue[View Line Chart!]**"):
     st.altair_chart(heatmap_chart, use_container_width=True)
     st.success("Visualization created")
-
-
 
 
 st.divider()
