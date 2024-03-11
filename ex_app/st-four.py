@@ -56,38 +56,50 @@ with c1:
 
 st.divider()
 
-def make_heatmap3 ():
+def make_chart ():
     
  # Assuming 'df' is a pandas DataFrame with 'TIMESTAMP', 'TOTAL_SALES_$', and 'FORECAST' columns
     df = session.sql("SELECT timestamp as timestamp, total_sales, product, NULL AS forecast FROM ADIDAS.PUBLIC.ALLPRODUCTS_total_SALES where to_date(timestamp ) > (SELECT max(to_date(timestamp)) - interval ' 2 months' FROM ADIDAS.PUBLIC.ALLPRODUCTS_total_SALES) UNION SELECT TS AS timestamp, NULL AS total_sales, series AS product, forecast FROM ADIDAS.PUBLIC.us_total_sales_predictions ORDER BY timestamp, product asc").to_pandas()
 
-    # Creating line charts for Units Sold and Forecast
-    line_total_sales = alt.Chart(df).mark_line(color='blue', size=2).encode(
-        x='TIMESTAMP:T',
-        y='TOTAL_SALES:Q',
-        tooltip=['TIMESTAMP', 'TOTAL_SALES']
-    ).properties(
-        title='Total Sales'
-    )
 
-    line_forecast = alt.Chart(df).mark_line(color='yellow', size=2).encode(
-        x='TIMESTAMP:T',
-        y='FORECAST:Q',
-        tooltip=['TIMESTAMP', 'FORECAST']
-    ).properties(
-        title='Forecast'
-    )
 
-    # Combine the charts
-    chart3 = alt.layer(line_total_sales, line_forecast).resolve_scale(
-        y='independent'
+# Altair tooltip for interactive exploration
+    tooltip = [alt.Tooltip('TIMESTAMP:T', title='TIMESTAMP'),
+                alt.Tooltip('PRODUCT:N', title='PRODUCT'),
+                alt.Tooltip('TOTAL_SALES:Q', title='TOTAL SALES'),
+                alt.Tooltip('FORECAST:Q', title='FORECAST')]
+# Create a base chart with common encoding
+    base = alt.Chart(df).encode(
+            alt.X('TIMESTAMP:T', title='TIMESTAMP'),
+            alt.Color('PRODUCT:N', legend=alt.Legend(title="Product"))
+         ).properties(
+            width='container'
+         )
+
+
+# Define the units sold line
+    total_sales_line = base.mark_line().encode(
+            alt.Y('TOTAL_SALES:Q', title='TOTAL_SALES', scale=alt.Scale(zero=False)),
+            tooltip=tooltip
+        )
+# Define the forecast line
+    forecast_line = base.mark_line(strokeDash=[5,5]).encode(
+            alt.Y('FORECAST:Q', scale=alt.Scale(zero=False)),
+            tooltip=tooltip
+        )
+# Combine the charts
+        #chart = alt.layer(units_sold_line, forecast_line).resolve_scale(y='independent')
+        #chart = alt.layer( forecast_line).resolve_scale(y='independent')
+    chart = alt.layer(total_sales_line, forecast_line
     ).properties(
-        title='Total Sales Forecast Visualization',
+        title='Total Sales for all 3 products-Forecast Visualization',
         width='container',
         height=300  # You can adjust the height as needed
-    )
-
-    return chart3
+    ).interactive()
+        #chart.grid(True)
+        #chart.legend()
+    st.session_state.chart = chart
+    return st.session_state.chart
 
        
 
@@ -134,11 +146,15 @@ if st.button("**:blue[View Line Chart!]**"):
 
 
 st.write(":heavy_minus_sign:" * 29)       
- 
-heatmap_chart3 = make_heatmap3()
+
+chart1= make_chart()
 if st.session_state.button_clicked9:
-    st.altair_chart(heatmap_chart3, use_container_width=True)
-    st.success("Visualization created")
+    st.altair_chart(chart1, use_container_width=True)
+        
+        #st.pyplot(heatmap,use_container_width=True)
+    st.success("Visualization created finally")
+    
+
 
 st.divider()
 
