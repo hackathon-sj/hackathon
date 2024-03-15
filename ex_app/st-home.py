@@ -62,7 +62,8 @@ session = create_session()
  #st.info('**💡 Team Data Maverick 💡**', icon="💡")
 
     #"## Declaring the pages in your app:"
-st.markdown("""
+with st.expander("**Expand this area to read about Problem Statement**"):
+    st.markdown("""
     **Problem Statement 1: Prediction & Anomaly Detection in Snowflake (Cortex)**
 
     **Ask**
@@ -80,7 +81,7 @@ st.markdown("""
 """)
 st.divider()
 
-st.title('Sales Forecast Visualization Application')
+st.title('Forecast Demand Visualization Application')
 
 show_pages(
     [
@@ -125,7 +126,7 @@ table_name = "ADIDAS.PUBLIC.SALES_DATA"
 col1,col2 = st.columns([2,1])
 
 with col1:
- with st.expander("View and Download data"):
+ with st.expander("**View and Download data**"):
     df = load_data(table_name)
     st.dataframe(df)
 

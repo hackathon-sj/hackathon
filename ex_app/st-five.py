@@ -66,32 +66,54 @@ if st.session_state.button_clicked7:
     st.success("Anamoly Detection Model created successfully !")
 
 st.write('✏️ **Step 2:- Detect Anamolies for **:green[units sold]** for the prediction interval selected by user**')
-Interval = st.selectbox(
-     '**:red[Select Prediction Interval]**',
-     ('0.85', '0.90', '0.95'),help="Train model to create predictions for the demand for the selected days")
+#Interval = st.selectbox(
+#     '**:red[Select Prediction Interval]**',
+#     ('0.85', '0.90', '0.95'),help="Train model to create predictions for the demand for the selected days")
 
+#Interval1 = st.select_slider('**:red[Select Prediction Interval]**', 0.80,0.85,0.90,0.95)
+
+Interval = st.select_slider(
+    '**:red[Select Prediction Interval]**',
+    options=['0.80','0.85','0.90','0.95'])
+    
 st.write('**Selected Prediction Interval:**', Interval)
+
+#st.write('**Selected Prediction Interval:**', Interval)
 
 if 'button_clicked8' not in st.session_state:
     st.session_state.button_clicked8 = False
 if st.button("**:blue[Detect Anamolies !]**"):
     st.session_state.button_clicked8=True
-    session.sql("CALL ADIDAS.PUBLIC.us_anomaly_model!DETECT_ANOMALIES(INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'ADIDAS.PUBLIC.us_anomaly_analysis_set'),SERIES_COLNAME => 'PRODUCT',TIMESTAMP_COLNAME => 'TIMESTAMP',TARGET_COLNAME => 'UNITS_SOLD',CONFIG_OBJECT => {'prediction_interval': 0.95});").collect()
+    session.sql("CALL ADIDAS.PUBLIC.us_anomaly_model!DETECT_ANOMALIES(INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'ADIDAS.PUBLIC.us_anomaly_analysis_set'),SERIES_COLNAME => 'PRODUCT',TIMESTAMP_COLNAME => 'TIMESTAMP',TARGET_COLNAME => 'UNITS_SOLD',CONFIG_OBJECT => {'prediction_interval':"+Interval+"});").collect()
     session.sql("CREATE OR REPLACE TABLE ADIDAS.PUBLIC.us_anomalies AS (SELECT * FROM TABLE(RESULT_SCAN(-1)));").collect()
 if st.session_state.button_clicked8:
     st.success("Anamolies Detected successfully !")
 
-st.write('✏️ **Step 3:- Create Visualization**')
+st.write('✏️ **Step 3:- Identify Trends**')
+#if 'button_clicked9' not in st.session_state:
+#    st.session_state.button_clicked9 = False
+if st.button("**:blue[Click to view data!]**"):
+    df = session.sql("SELECT series as product, (case when is_anomaly=TRUE then 'YES' end )IS_ANOMALY, count(is_anomaly) AS num_records FROM ADIDAS.PUBLIC.us_anomalies WHERE is_anomaly =1 and series like 'Mens%' GROUP BY ALL ORDER BY num_records DESC").to_pandas()
+    st.dataframe(df)
+
+
+st.write('✏️ **Step 4:- Review Results**')
+Product = st.selectbox(
+     '**:red[Select Product]**',
+     ('Mens Apparel', 'Mens Street Footwear', 'Mens Athletic Footwear'),help="Train model to create predictions for the demand for the selected days")
+
+st.write('**Selected Product :**', Product)
+
 if 'button_clicked9' not in st.session_state:
     st.session_state.button_clicked9 = False
-if st.button("**:blue[View Line Chart!]**"):
+
+if st.button("**:blue[View  data !]**"):
     st.session_state.button_clicked9=True
 
-
-
-st.write(":heavy_minus_sign:" * 29)       
+    df1 = session.sql(f"SELECT  * FROM ADIDAS.PUBLIC.us_anomalies where series='{Product}' order by 7").to_pandas()
+    st.dataframe(df1)
+#st.write(":heavy_minus_sign:" * 29)       
  
-
 
 st.divider()
 
